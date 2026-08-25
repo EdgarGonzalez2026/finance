@@ -1,5 +1,20 @@
 # FINANCE
 
+## V0.3 - Acceso local
+
+- Registro local
+- Login
+- PIN rápido de 4 dígitos
+- Hash seguro mediante Web Crypto
+- Perfil
+- Cambio de contraseña
+- Cambio de PIN
+- Cerrar sesión
+- Bloqueo temporal por intentos incorrectos
+- Mejoras PWA
+
+> La autenticación V0.3 es una protección local básica del dispositivo o navegador. No equivale a autenticación bancaria ni protege contra un atacante con acceso completo al almacenamiento del navegador.
+
 ## V0.2
 
 - Gestión de cuentas

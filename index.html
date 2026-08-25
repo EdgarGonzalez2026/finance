@@ -10,10 +10,57 @@
   <title>FINANCE</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=0.2.1">
+  <link rel="stylesheet" href="style.css?v=0.3.0">
 </head>
-<body>
-  <main class="app-shell">
+<body class="auth-locked">
+  <section id="auth-shell" class="auth-shell" aria-live="polite">
+    <div class="auth-card">
+      <header class="auth-brand"><img src="icons/icon-192.png" alt=""><strong>FINANCE</strong></header>
+
+      <form id="register-form" class="auth-screen" data-auth-screen="register" novalidate>
+        <div class="auth-heading"><p class="eyebrow">ACCESO LOCAL</p><h1>Creá tu perfil</h1><p>Tu información se guarda únicamente en este dispositivo.</p></div>
+        <div class="auth-name-grid">
+          <label class="field"><span>Nombre</span><input id="register-name" autocomplete="given-name" maxlength="40" required></label>
+          <label class="field"><span>Apellido</span><input id="register-lastname" autocomplete="family-name" maxlength="40" required></label>
+        </div>
+        <label class="field"><span>Número de celular</span><input id="register-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+595" maxlength="20" required></label>
+        <label class="field password-field"><span>Contraseña</span><div><input id="register-password" type="password" autocomplete="new-password" minlength="8" required><button class="password-toggle" type="button" data-toggle-password="register-password" aria-label="Mostrar contraseña"></button></div></label>
+        <label class="field password-field"><span>Confirmar contraseña</span><div><input id="register-confirm" type="password" autocomplete="new-password" minlength="8" required><button class="password-toggle" type="button" data-toggle-password="register-confirm" aria-label="Mostrar contraseña"></button></div></label>
+        <p id="register-error" class="form-error" role="alert" hidden></p>
+        <button class="primary-button auth-submit" type="submit">Crear cuenta</button>
+        <p class="auth-switch">¿Ya tenés un perfil? <button type="button" data-auth-go="login">Iniciar sesión</button></p>
+      </form>
+
+      <form id="pin-setup-form" class="auth-screen" data-auth-screen="pin-setup" novalidate hidden>
+        <div class="auth-heading"><p class="eyebrow">ACCESO RÁPIDO</p><h1>Creá tu PIN</h1><p>Usaremos este PIN para acceder rápidamente a FINANCE desde este dispositivo.</p></div>
+        <label class="pin-label">PIN de 4 dígitos</label>
+        <div class="pin-entry" data-pin-entry><input id="setup-pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" aria-label="PIN de 4 dígitos"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <label class="pin-label">Confirmar PIN</label>
+        <div class="pin-entry" data-pin-entry><input id="setup-pin-confirm" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" aria-label="Confirmar PIN"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <p id="pin-setup-error" class="form-error" role="alert" hidden></p>
+        <button class="primary-button auth-submit" type="submit">Guardar PIN</button>
+      </form>
+
+      <form id="login-form" class="auth-screen" data-auth-screen="login" novalidate hidden>
+        <div class="auth-heading"><p class="eyebrow">ACCESO LOCAL</p><h1>Bienvenido nuevamente</h1><p>Ingresá con tu perfil guardado en este dispositivo.</p></div>
+        <label class="field"><span>Número de celular</span><input id="login-phone" type="tel" inputmode="tel" autocomplete="username" required></label>
+        <label class="field password-field"><span>Contraseña</span><div><input id="login-password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-toggle-password="login-password" aria-label="Mostrar contraseña"></button></div></label>
+        <p id="login-error" class="form-error" role="alert" hidden></p>
+        <button class="primary-button auth-submit" type="submit">Iniciar sesión</button>
+        <button id="forgot-password" class="forgot-button" type="button">¿Olvidaste tu contraseña?</button>
+        <p id="register-link-row" class="auth-switch">¿No tenés un perfil? <button type="button" data-auth-go="register">Registrarse</button></p>
+      </form>
+
+      <div class="auth-screen pin-unlock-screen" data-auth-screen="pin" hidden>
+        <div class="auth-heading"><p class="eyebrow">FINANCE</p><h1 id="pin-greeting">Hola</h1><p>Ingresá tu PIN</p></div>
+        <div class="pin-entry unlock-pin" data-pin-entry><input id="unlock-pin" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="PIN de acceso"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <p id="pin-error" class="pin-message" role="alert"></p>
+        <button class="auth-link-button" type="button" data-logout>Cerrar sesión</button>
+      </div>
+    </div>
+  </section>
+
+  <main id="finance-app" class="app-shell" hidden>
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true">F</div>
       <h1>FINANCE</h1>
@@ -89,10 +136,15 @@
     <section class="app-view" data-view="accounts" aria-labelledby="accounts-title" hidden>
       <div class="page-heading"><div><p class="eyebrow">PATRIMONIO</p><h2 id="accounts-title">Cuentas</h2></div><button id="new-account-button" class="small-primary" type="button">+ Nueva</button></div>
       <div id="accounts-list" class="accounts-list"></div>
+      <section class="profile-card" aria-labelledby="profile-title">
+        <div><p class="eyebrow">ACCESO LOCAL</p><h2 id="profile-title">Mi perfil</h2></div>
+        <div class="profile-identity"><strong id="profile-fullname"></strong><span id="profile-phone"></span></div>
+        <div class="profile-actions"><button id="change-password-button" type="button">Cambiar contraseña</button><button id="change-pin-button" type="button">Cambiar PIN</button><button class="danger-text" type="button" data-logout>Cerrar sesión</button></div>
+      </section>
     </section>
   </main>
 
-  <nav class="app-bottom-nav" aria-label="Navegación principal">
+  <nav id="app-navigation" class="app-bottom-nav" aria-label="Navegación principal" hidden>
     <button class="app-nav-item is-active" data-view="home" type="button" aria-current="page">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.1a1.1 1.1 0 0 1-1.1 1.1H15v-6H9v6H4.1A1.1 1.1 0 0 1 3 19.9Z"/></svg><span>Inicio</span>
     </button>
@@ -208,9 +260,45 @@
     </section>
   </div>
 
+  <div class="modal" id="password-modal" hidden>
+    <div class="modal-backdrop" data-close-password></div>
+    <section class="modal-panel auth-settings-panel" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+      <div class="modal-handle"></div><div class="modal-header"><div><p class="eyebrow">SEGURIDAD LOCAL</p><h2 id="password-modal-title">Cambiar contraseña</h2></div><button class="icon-button" data-close-password type="button" aria-label="Cerrar">&times;</button></div>
+      <form id="change-password-form" novalidate>
+        <label class="field password-field"><span>Contraseña actual</span><div><input id="current-password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-toggle-password="current-password" aria-label="Mostrar contraseña"></button></div></label>
+        <label class="field password-field"><span>Nueva contraseña</span><div><input id="new-password" type="password" autocomplete="new-password" minlength="8" required><button class="password-toggle" type="button" data-toggle-password="new-password" aria-label="Mostrar contraseña"></button></div></label>
+        <label class="field password-field"><span>Confirmar nueva contraseña</span><div><input id="new-password-confirm" type="password" autocomplete="new-password" minlength="8" required><button class="password-toggle" type="button" data-toggle-password="new-password-confirm" aria-label="Mostrar contraseña"></button></div></label>
+        <p id="change-password-error" class="form-error" role="alert" hidden></p><button class="primary-button" type="submit">Guardar contraseña</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal" id="pin-change-modal" hidden>
+    <div class="modal-backdrop" data-close-pin-change></div>
+    <section class="modal-panel auth-settings-panel" role="dialog" aria-modal="true" aria-labelledby="pin-change-title">
+      <div class="modal-handle"></div><div class="modal-header"><div><p class="eyebrow">SEGURIDAD LOCAL</p><h2 id="pin-change-title">Cambiar PIN</h2></div><button class="icon-button" data-close-pin-change type="button" aria-label="Cerrar">&times;</button></div>
+      <form id="change-pin-form" novalidate>
+        <label class="pin-label">PIN actual</label><div class="pin-entry compact-pin" data-pin-entry><input id="current-pin" type="password" inputmode="numeric" maxlength="4" aria-label="PIN actual"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <label class="pin-label">Nuevo PIN</label><div class="pin-entry compact-pin" data-pin-entry><input id="new-pin" type="password" inputmode="numeric" maxlength="4" aria-label="Nuevo PIN"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <label class="pin-label">Confirmar nuevo PIN</label><div class="pin-entry compact-pin" data-pin-entry><input id="new-pin-confirm" type="password" inputmode="numeric" maxlength="4" aria-label="Confirmar nuevo PIN"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <p id="change-pin-error" class="form-error" role="alert" hidden></p><button class="primary-button" type="submit">Guardar PIN</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal" id="reset-modal" hidden>
+    <div class="modal-backdrop" data-close-reset></div>
+    <section class="modal-panel auth-settings-panel" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <div class="modal-header"><div><p class="eyebrow">ACCESO LOCAL</p><h2 id="reset-title">Recuperación no disponible</h2></div><button class="icon-button" data-close-reset type="button" aria-label="Cerrar">&times;</button></div>
+      <div id="reset-explanation"><p class="modal-copy">FINANCE funciona actualmente de forma local. Sin una cuenta en la nube no podemos verificar tu identidad para recuperar la contraseña.</p><p class="modal-copy">Podés restablecer FINANCE, pero esto eliminará todos los datos almacenados en este dispositivo.</p><div class="modal-actions"><button class="secondary-button" data-close-reset type="button">Cancelar</button><button id="begin-reset" class="danger-button" type="button">Restablecer FINANCE</button></div></div>
+      <div id="reset-confirmation" hidden><p class="modal-copy"><strong>Esta acción eliminará permanentemente tu perfil, cuentas y movimientos guardados en este dispositivo.</strong></p><label class="field"><span>Escribí RESTABLECER para continuar</span><input id="reset-confirm-text" autocomplete="off"></label><div class="modal-actions"><button class="secondary-button" data-close-reset type="button">Cancelar</button><button id="confirm-reset" class="danger-button" type="button" disabled>Eliminar todos los datos</button></div></div>
+    </section>
+  </div>
+
   <script src="vendor/xlsx.full.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/jspdf.plugin.autotable.min.js"></script>
-  <script src="app.js?v=0.2.1"></script>
+  <script src="app.js?v=0.3.0"></script>
+  <script src="auth.js?v=0.3.0"></script>
 </body>
 </html>

@@ -25,12 +25,13 @@ const elements = {
   exportModal: $("#export-modal"), exportChoice: $("#export-choice"), exportPreview: $("#export-preview"), confirmExport: $("#confirm-export"), previewPeriod: $("#preview-period"), previewGenerated: $("#preview-generated"), previewFilters: $("#preview-filters"), previewSummary: $("#preview-summary"), previewBody: $("#preview-body")
 };
 
-let movements = loadArray(MOVEMENTS_KEY);
-let accounts = loadArray(ACCOUNTS_KEY);
+let movements = [];
+let accounts = [];
 let editingMovementId = null;
 let editingAccountId = null;
 let exportFormat = null;
 let filteredStatement = [];
+let appInitialized = false;
 
 function loadArray(key) {
   try { const value = JSON.parse(localStorage.getItem(key)); return Array.isArray(value) ? value : []; }
@@ -359,18 +360,22 @@ function renderApp() {
   renderSummary(); renderMovementList(elements.list, sortMovements(movements).slice(0, 8)); renderMovementList(elements.allList, movements); elements.count.textContent = String(movements.length); renderAccounts(); populateFilters(); renderStatement();
 }
 
-migrateData();
-elements.newMovement.addEventListener("click", () => openMovementModal()); $$('[data-new-movement]').forEach((button) => button.addEventListener("click", () => openMovementModal()));
-elements.movementForm.addEventListener("submit", saveMovement); elements.movementForm.addEventListener("input", () => { elements.formError.hidden = true; });
-elements.movementForm.querySelectorAll('[name="type"]').forEach((input) => input.addEventListener("change", () => updateMovementFields()));
-elements.account.addEventListener("change", () => fillAccountSelect(elements.destination, null, elements.account.value));
-$$('[data-close-modal]').forEach((item) => item.addEventListener("click", closeMovementModal));
-$("#new-account-button").addEventListener("click", () => openAccountModal()); elements.accountForm.addEventListener("submit", saveAccount); $$('[data-close-account]').forEach((item) => item.addEventListener("click", closeAccountModal));
-$$(".app-nav-item[data-view]").forEach((button) => button.addEventListener("click", () => changeView(button.dataset.view)));
-elements.filterForm.addEventListener("input", renderStatement); $("#clear-filters").addEventListener("click", resetFilters); $("#download-button").addEventListener("click", openExportModal); $$('[data-close-export]').forEach((item) => item.addEventListener("click", closeExportModal)); $$('[data-export-format]').forEach((button) => button.addEventListener("click", () => prepareExport(button.dataset.exportFormat)));
-elements.confirmExport.addEventListener("click", () => exportFormat === "excel" ? downloadExcel() : downloadPdf());
-document.addEventListener("keydown", (event) => { if (event.key !== "Escape") return; if (!elements.movementModal.hidden) closeMovementModal(); else if (!elements.accountModal.hidden) closeAccountModal(); else if (!elements.exportModal.hidden) closeExportModal(); });
-populateFilters(); resetFilters(); renderApp(); changeView("home");
+function initializeFinanceApp() {
+  if (appInitialized) { renderApp(); changeView("home"); return; }
+  appInitialized = true; movements = loadArray(MOVEMENTS_KEY); accounts = loadArray(ACCOUNTS_KEY); migrateData();
+  elements.newMovement.addEventListener("click", () => openMovementModal()); $$('[data-new-movement]').forEach((button) => button.addEventListener("click", () => openMovementModal()));
+  elements.movementForm.addEventListener("submit", saveMovement); elements.movementForm.addEventListener("input", () => { elements.formError.hidden = true; });
+  elements.movementForm.querySelectorAll('[name="type"]').forEach((input) => input.addEventListener("change", () => updateMovementFields()));
+  elements.account.addEventListener("change", () => fillAccountSelect(elements.destination, null, elements.account.value));
+  $$('[data-close-modal]').forEach((item) => item.addEventListener("click", closeMovementModal));
+  $("#new-account-button").addEventListener("click", () => openAccountModal()); elements.accountForm.addEventListener("submit", saveAccount); $$('[data-close-account]').forEach((item) => item.addEventListener("click", closeAccountModal));
+  $$(".app-nav-item[data-view]").forEach((button) => button.addEventListener("click", () => changeView(button.dataset.view)));
+  elements.filterForm.addEventListener("input", renderStatement); $("#clear-filters").addEventListener("click", resetFilters); $("#download-button").addEventListener("click", openExportModal); $$('[data-close-export]').forEach((item) => item.addEventListener("click", closeExportModal)); $$('[data-export-format]').forEach((button) => button.addEventListener("click", () => prepareExport(button.dataset.exportFormat)));
+  elements.confirmExport.addEventListener("click", () => exportFormat === "excel" ? downloadExcel() : downloadPdf());
+  document.addEventListener("keydown", (event) => { if (event.key !== "Escape") return; if (!elements.movementModal.hidden) closeMovementModal(); else if (!elements.accountModal.hidden) closeAccountModal(); else if (!elements.exportModal.hidden) closeExportModal(); });
+  populateFilters(); resetFilters(); renderApp(); changeView("home");
+}
+window.initializeFinanceApp = initializeFinanceApp;
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
