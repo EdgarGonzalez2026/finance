@@ -11,6 +11,8 @@
 - Cambio de PIN
 - Cerrar sesión
 - Bloqueo temporal por intentos incorrectos
+- Pantalla de carga inicial
+- Mejor experiencia de PIN en iPhone
 - Mejoras PWA
 
 > La autenticación V0.3 es una protección local básica del dispositivo o navegador. No equivale a autenticación bancaria ni protege contra un atacante con acceso completo al almacenamiento del navegador.

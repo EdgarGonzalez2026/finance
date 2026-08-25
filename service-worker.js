@@ -1,12 +1,12 @@
 "use strict";
 
-const CACHE_NAME = "finance-v3";
+const CACHE_NAME = "finance-v3-1";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=0.3.0",
-  "./app.js?v=0.3.0",
-  "./auth.js?v=0.3.0",
+  "./style.css?v=0.3.1",
+  "./app.js?v=0.3.1",
+  "./auth.js?v=0.3.1",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

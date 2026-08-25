@@ -8,11 +8,11 @@ const MAX_PIN_FAILURES = 5;
 const PIN_LOCK_MS = 30000;
 
 const authElements = {
-  shell: document.querySelector("#auth-shell"), app: document.querySelector("#finance-app"), navigation: document.querySelector("#app-navigation"),
+  splash: document.querySelector("#splash-screen"), shell: document.querySelector("#auth-shell"), app: document.querySelector("#finance-app"), navigation: document.querySelector("#app-navigation"),
   registerForm: document.querySelector("#register-form"), registerName: document.querySelector("#register-name"), registerLastname: document.querySelector("#register-lastname"), registerPhone: document.querySelector("#register-phone"), registerPassword: document.querySelector("#register-password"), registerConfirm: document.querySelector("#register-confirm"), registerError: document.querySelector("#register-error"),
   pinSetupForm: document.querySelector("#pin-setup-form"), setupPin: document.querySelector("#setup-pin"), setupPinConfirm: document.querySelector("#setup-pin-confirm"), pinSetupError: document.querySelector("#pin-setup-error"),
   loginForm: document.querySelector("#login-form"), loginPhone: document.querySelector("#login-phone"), loginPassword: document.querySelector("#login-password"), loginError: document.querySelector("#login-error"), registerLinkRow: document.querySelector("#register-link-row"),
-  unlockPin: document.querySelector("#unlock-pin"), pinGreeting: document.querySelector("#pin-greeting"), pinError: document.querySelector("#pin-error"),
+  unlockPin: document.querySelector("#unlock-pin"), activatePin: document.querySelector("#activate-pin-input"), pinGreeting: document.querySelector("#pin-greeting"), pinError: document.querySelector("#pin-error"),
   profileFullname: document.querySelector("#profile-fullname"), profilePhone: document.querySelector("#profile-phone"),
   passwordModal: document.querySelector("#password-modal"), passwordForm: document.querySelector("#change-password-form"), currentPassword: document.querySelector("#current-password"), newPassword: document.querySelector("#new-password"), newPasswordConfirm: document.querySelector("#new-password-confirm"), passwordError: document.querySelector("#change-password-error"),
   pinModal: document.querySelector("#pin-change-modal"), pinForm: document.querySelector("#change-pin-form"), currentPin: document.querySelector("#current-pin"), newPin: document.querySelector("#new-pin"), newPinConfirm: document.querySelector("#new-pin-confirm"), changePinError: document.querySelector("#change-pin-error"),
@@ -53,12 +53,13 @@ function validPhone(value) { const digits = normalizePhone(value); return digits
 function showAuthScreen(name) {
   document.querySelectorAll("[data-auth-screen]").forEach((screen) => { screen.hidden = screen.dataset.authScreen !== name; });
   authElements.shell.hidden = false; authElements.app.hidden = true; authElements.navigation.hidden = true; document.body.classList.add("auth-locked");
-  if (name === "pin") { authElements.pinGreeting.textContent = `Hola, ${authData.profile.nombre}`; authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); updateLockMessage(); requestAnimationFrame(() => authElements.unlockPin.focus()); }
+  document.body.classList.toggle("pin-screen-active", name === "pin");
+  if (name === "pin") { authElements.pinGreeting.textContent = `Hola, ${authData.profile.nombre}`; authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); updateLockMessage(); }
   if (name === "login") { authElements.registerLinkRow.hidden = Boolean(authData?.profile); authElements.loginPhone.value = authData?.profile?.celular || ""; requestAnimationFrame(() => authElements.loginPassword.focus()); }
   if (name === "register" && !authElements.registerPhone.value) authElements.registerPhone.value = "+595 ";
 }
 function unlockFinance() {
-  clearInterval(lockTimer); authElements.shell.hidden = true; authElements.app.hidden = false; authElements.navigation.hidden = false; document.body.classList.remove("auth-locked");
+  clearInterval(lockTimer); authElements.shell.hidden = true; authElements.app.hidden = false; authElements.navigation.hidden = false; document.body.classList.remove("auth-locked", "pin-screen-active", "auth-unlocking");
   authElements.profileFullname.textContent = `${authData.profile.nombre} ${authData.profile.apellido}`; authElements.profilePhone.textContent = authData.profile.celular;
   window.initializeFinanceApp?.();
 }
@@ -81,7 +82,7 @@ async function registerProfile(event) {
   if (password !== authElements.registerConfirm.value) return showError(authElements.registerError, "Las contraseñas no coinciden.");
   try {
     pendingRegistration = { profile: { nombre: name, apellido: lastname, celular: phone, creadoEn: new Date().toISOString() }, password: await protectSecret(password, PASSWORD_ITERATIONS) };
-    authElements.registerForm.reset(); showAuthScreen("pin-setup"); requestAnimationFrame(() => authElements.setupPin.focus());
+    authElements.registerForm.reset(); showAuthScreen("pin-setup");
   } catch (error) { console.error(error); showError(authElements.registerError, "No se pudo proteger la contraseña en este navegador."); }
 }
 
@@ -107,15 +108,16 @@ async function login(event) {
 
 function secondsLocked() { return Math.max(0, Math.ceil((Number(sessionData.lockedUntil) - Date.now()) / 1000)); }
 function updateLockMessage() {
-  clearInterval(lockTimer); const update = () => { const seconds = secondsLocked(); authElements.unlockPin.disabled = seconds > 0; authElements.pinError.textContent = seconds > 0 ? `Intentá nuevamente en ${seconds} s` : ""; if (!seconds) { clearInterval(lockTimer); if (sessionData.lockedUntil) { sessionData.pinFailures = 0; sessionData.lockedUntil = 0; writeJson(SESSION_KEY, sessionData); authElements.unlockPin.focus(); } } }; update(); if (secondsLocked()) lockTimer = setInterval(update, 250);
+  clearInterval(lockTimer); const update = () => { const seconds = secondsLocked(); authElements.unlockPin.disabled = seconds > 0; authElements.activatePin.disabled = seconds > 0; if (seconds > 0) authElements.pinError.textContent = `Intentá nuevamente en ${seconds} s`; else { clearInterval(lockTimer); if (sessionData.lockedUntil) { sessionData.pinFailures = 0; sessionData.lockedUntil = 0; writeJson(SESSION_KEY, sessionData); authElements.pinError.textContent = ""; } } }; update(); if (secondsLocked()) lockTimer = setInterval(update, 250);
 }
+function animatePinError() { const card = authElements.unlockPin.closest(".auth-card"); card.classList.remove("pin-error-shake"); void card.offsetWidth; card.classList.add("pin-error-shake"); }
 async function validateUnlockPin() {
   if (pinVerifying || authElements.unlockPin.value.length !== 4 || secondsLocked()) return;
   pinVerifying = true; const correct = await verifySecret(authElements.unlockPin.value, authData.pin); pinVerifying = false;
-  if (correct) { sessionData.pinFailures = 0; sessionData.lockedUntil = 0; writeJson(SESSION_KEY, sessionData); authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); unlockFinance(); return; }
+  if (correct) { sessionData.pinFailures = 0; sessionData.lockedUntil = 0; writeJson(SESSION_KEY, sessionData); authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); document.body.classList.add("auth-unlocking"); setTimeout(unlockFinance, 190); return; }
   sessionData.pinFailures = (Number(sessionData.pinFailures) || 0) + 1;
   if (sessionData.pinFailures >= MAX_PIN_FAILURES) sessionData.lockedUntil = Date.now() + PIN_LOCK_MS;
-  writeJson(SESSION_KEY, sessionData); authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); authElements.pinError.textContent = sessionData.lockedUntil ? "" : "PIN incorrecto. Intentá nuevamente."; updateLockMessage();
+  writeJson(SESSION_KEY, sessionData); authElements.unlockPin.value = ""; updatePinDisplay(authElements.unlockPin); authElements.pinError.textContent = sessionData.lockedUntil ? "" : "PIN incorrecto. Intentá nuevamente."; animatePinError(); updateLockMessage();
 }
 
 function logout() {
@@ -143,6 +145,7 @@ async function changePin(event) {
 const eyeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
 document.querySelectorAll("[data-toggle-password]").forEach((button) => { button.innerHTML = eyeIcon; button.addEventListener("click", () => { const input = document.getElementById(button.dataset.togglePassword); const show = input.type === "password"; input.type = show ? "text" : "password"; button.setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña"); }); });
 document.querySelectorAll("[data-pin-entry] input").forEach((input) => input.addEventListener("input", () => { updatePinDisplay(input); if (input === authElements.unlockPin) validateUnlockPin(); }));
+authElements.activatePin.addEventListener("click", () => { if (!authElements.unlockPin.disabled) authElements.unlockPin.focus(); });
 document.querySelectorAll("[data-auth-go]").forEach((button) => button.addEventListener("click", () => { if (button.dataset.authGo === "login" && !authData?.profile) return showError(authElements.registerError, "Todavía no existe un perfil local."); showAuthScreen(button.dataset.authGo); }));
 authElements.registerForm.addEventListener("submit", registerProfile); authElements.pinSetupForm.addEventListener("submit", saveInitialPin); authElements.loginForm.addEventListener("submit", login);
 document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", logout));
@@ -162,3 +165,10 @@ if (!globalThis.crypto?.subtle) {
 } else if (!authData?.profile) showAuthScreen("register");
 else if (!sessionData.active) showAuthScreen("login");
 else showAuthScreen("pin");
+
+setTimeout(() => {
+  authElements.splash.classList.add("is-leaving");
+  const finish = () => { authElements.splash.hidden = true; };
+  authElements.splash.addEventListener("transitionend", finish, { once: true });
+  setTimeout(finish, 450);
+}, 1100);

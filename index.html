@@ -10,9 +10,17 @@
   <title>FINANCE</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=0.3.0">
+  <link rel="stylesheet" href="style.css?v=0.3.1">
 </head>
 <body class="auth-locked">
+  <div id="splash-screen" class="splash-screen" role="status" aria-label="Cargando FINANCE">
+    <div class="splash-content">
+      <img src="icons/icon-192.png" alt="">
+      <strong>FINANCE</strong>
+      <span>Cargando tu espacio financiero...</span>
+      <i aria-hidden="true"><b></b></i>
+    </div>
+  </div>
   <section id="auth-shell" class="auth-shell" aria-live="polite">
     <div class="auth-card">
       <header class="auth-brand"><img src="icons/icon-192.png" alt=""><strong>FINANCE</strong></header>
@@ -54,6 +62,7 @@
       <div class="auth-screen pin-unlock-screen" data-auth-screen="pin" hidden>
         <div class="auth-heading"><p class="eyebrow">FINANCE</p><h1 id="pin-greeting">Hola</h1><p>Ingresá tu PIN</p></div>
         <div class="pin-entry unlock-pin" data-pin-entry><input id="unlock-pin" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="PIN de acceso"><div aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <button id="activate-pin-input" class="pin-activate-button" type="button">Tocar para ingresar PIN</button>
         <p id="pin-error" class="pin-message" role="alert"></p>
         <button class="auth-link-button" type="button" data-logout>Cerrar sesión</button>
       </div>
@@ -298,7 +307,7 @@
   <script src="vendor/xlsx.full.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/jspdf.plugin.autotable.min.js"></script>
-  <script src="app.js?v=0.3.0"></script>
-  <script src="auth.js?v=0.3.0"></script>
+  <script src="app.js?v=0.3.1"></script>
+  <script src="auth.js?v=0.3.1"></script>
 </body>
 </html>
