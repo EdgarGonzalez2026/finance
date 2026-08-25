@@ -1,5 +1,19 @@
 # FINANCE
 
+## V0.2
+
+- Gestión de cuentas
+- Transferencias internas
+- Edición de movimientos
+- Fecha y hora
+- Forma de pago
+- Extracto completo
+- Filtros avanzados
+- Exportación Excel
+- Exportación PDF
+- Vista previa de exportaciones
+- Mejoras PWA
+
 ## V0.1.1 - PWA
 
 - Soporte PWA

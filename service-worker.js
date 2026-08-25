@@ -1,12 +1,18 @@
 "use strict";
 
-const CACHE_NAME = "finance-v1";
+const CACHE_NAME = "finance-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/apple-touch-icon.png",
+  "./vendor/xlsx.full.min.js",
+  "./vendor/jspdf.umd.min.js",
+  "./vendor/jspdf.plugin.autotable.min.js"
 ];
 
 self.addEventListener("install", (event) => {
