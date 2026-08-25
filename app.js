@@ -138,8 +138,8 @@ function createMovementElement(movement) {
   const side = document.createElement("div"); side.className = "movement-side";
   const amount = document.createElement("span"); amount.className = `movement-amount ${kind}`; amount.textContent = `${movement.tipo === "ingreso" ? "+" : movement.tipo === "gasto" ? "−" : ""} ${formatGuaranies(movement.monto)}`;
   const actions = document.createElement("div"); actions.className = "movement-actions";
-  const edit = document.createElement("button"); edit.type = "button"; edit.className = "edit-button"; edit.textContent = "Editar"; edit.addEventListener("click", () => openMovementModal(movement.id));
-  const remove = document.createElement("button"); remove.type = "button"; remove.className = "delete-button"; remove.textContent = "Eliminar"; remove.addEventListener("click", () => deleteMovement(movement.id));
+  const edit = document.createElement("button"); edit.type = "button"; edit.className = "edit-button"; edit.title = "Editar"; edit.setAttribute("aria-label", `Editar ${movementDescription(movement)}`); edit.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5ZM13.8 6.7l3.5 3.5"/></svg>'; edit.addEventListener("click", () => openMovementModal(movement.id));
+  const remove = document.createElement("button"); remove.type = "button"; remove.className = "delete-button"; remove.title = "Eliminar"; remove.setAttribute("aria-label", `Eliminar ${movementDescription(movement)}`); remove.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></svg>'; remove.addEventListener("click", () => deleteMovement(movement.id));
   actions.append(edit, remove); side.append(amount, actions); item.append(icon, info, side); return item;
 }
 
@@ -156,7 +156,13 @@ function renderMovementList(container, list) {
 function renderAccounts() {
   const balances = calculateAccountBalances();
   elements.accountCards.replaceChildren();
-  accounts.filter((account) => account.activa).forEach((account) => {
+  const activeAccounts = accounts.filter((account) => account.activa);
+  if (!activeAccounts.length) {
+    const empty = document.createElement("div"); empty.className = "accounts-empty";
+    const text = document.createElement("div"); const title = document.createElement("strong"); title.textContent = "Todavía no agregaste cuentas."; const message = document.createElement("p"); message.textContent = "Agregá tu primera cuenta para comenzar."; text.append(title, message);
+    const action = document.createElement("button"); action.type = "button"; action.textContent = "Agregar cuenta"; action.addEventListener("click", () => changeView("accounts")); empty.append(text, action); elements.accountCards.append(empty);
+  }
+  activeAccounts.forEach((account) => {
     const card = document.createElement("article"); card.className = "account-card";
     const name = document.createElement("span"); name.textContent = account.nombre;
     const balance = document.createElement("strong"); balance.textContent = formatGuaranies(balances.get(account.id)); card.append(name, balance); elements.accountCards.append(card);
@@ -194,7 +200,7 @@ function updateMovementFields(values = {}) {
 }
 
 function openMovementModal(id = null) {
-  if (!accounts.some((account) => account.activa)) { alert("Creá o activá una cuenta antes de registrar movimientos."); showView("accounts"); return; }
+  if (!accounts.some((account) => account.activa)) { alert("Creá o activá una cuenta antes de registrar movimientos."); changeView("accounts"); return; }
   editingMovementId = id; elements.movementForm.reset(); elements.formError.hidden = true;
   const movement = id ? movements.find((item) => item.id === id) : null;
   elements.movementTitle.textContent = movement ? "Editar movimiento" : "Nuevo movimiento";
@@ -336,10 +342,18 @@ async function downloadPdf() {
   doc.save(exportFileName("pdf"));
 }
 
-function showView(name) {
-  $$(".app-view").forEach((view) => { const active = view.dataset.view === name; view.hidden = !active; view.classList.toggle("active", active); });
-  $$("[data-nav]").forEach((button) => button.classList.toggle("active", button.dataset.nav === name));
-  if (name === "statement") renderStatement(); window.scrollTo({ top: 0, behavior: "smooth" });
+function changeView(name) {
+  const targetView = $(`.app-view[data-view="${name}"]`);
+  if (!targetView) return;
+  $$(".app-view").forEach((view) => { const active = view === targetView; view.hidden = !active; view.classList.toggle("active", active); });
+  $$(".app-nav-item[data-view]").forEach((button) => {
+    const active = button.dataset.view === name;
+    button.classList.toggle("is-active", active);
+    if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
+  });
+  if (name === "statement") renderStatement();
+  if (name === "accounts") renderAccounts();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function renderApp() {
   renderSummary(); renderMovementList(elements.list, sortMovements(movements).slice(0, 8)); renderMovementList(elements.allList, movements); elements.count.textContent = String(movements.length); renderAccounts(); populateFilters(); renderStatement();
@@ -352,10 +366,26 @@ elements.movementForm.querySelectorAll('[name="type"]').forEach((input) => input
 elements.account.addEventListener("change", () => fillAccountSelect(elements.destination, null, elements.account.value));
 $$('[data-close-modal]').forEach((item) => item.addEventListener("click", closeMovementModal));
 $("#new-account-button").addEventListener("click", () => openAccountModal()); elements.accountForm.addEventListener("submit", saveAccount); $$('[data-close-account]').forEach((item) => item.addEventListener("click", closeAccountModal));
-$$('[data-nav]').forEach((button) => button.addEventListener("click", () => showView(button.dataset.nav)));
+$$(".app-nav-item[data-view]").forEach((button) => button.addEventListener("click", () => changeView(button.dataset.view)));
 elements.filterForm.addEventListener("input", renderStatement); $("#clear-filters").addEventListener("click", resetFilters); $("#download-button").addEventListener("click", openExportModal); $$('[data-close-export]').forEach((item) => item.addEventListener("click", closeExportModal)); $$('[data-export-format]').forEach((button) => button.addEventListener("click", () => prepareExport(button.dataset.exportFormat)));
 elements.confirmExport.addEventListener("click", () => exportFormat === "excel" ? downloadExcel() : downloadPdf());
 document.addEventListener("keydown", (event) => { if (event.key !== "Escape") return; if (!elements.movementModal.hidden) closeMovementModal(); else if (!elements.accountModal.hidden) closeAccountModal(); else if (!elements.exportModal.hidden) closeExportModal(); });
-populateFilters(); resetFilters(); renderApp();
+populateFilters(); resetFilters(); renderApp(); changeView("home");
 
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch((error) => console.warn("No se pudo registrar el Service Worker.", error)));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    const localDevelopment = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    if (localDevelopment) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+        if ("caches" in window) {
+          const names = await caches.keys();
+          await Promise.all(names.filter((name) => name.startsWith("finance-")).map((name) => caches.delete(name)));
+        }
+      } catch (error) { console.warn("No se pudo limpiar la caché PWA local.", error); }
+      return;
+    }
+    navigator.serviceWorker.register("./service-worker.js").catch((error) => console.warn("No se pudo registrar el Service Worker.", error));
+  });
+}
